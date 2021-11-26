@@ -35,13 +35,13 @@ class TronConfiguration:
         self.outcome = Outcome.UNKNOWN
         self.init_board()
 
-    def __init__(self, board, num_rows, num_cols, left_bikes, right_bikes):
-        self.board = board
-        self.nrows = num_rows
-        self.ncols = num_cols
-        self.left_bikes = left_bikes
-        self.right_bikes = right_bikes
-        self.outcome = Outcome.UNKNOWN
+    # def __init__(self, board, num_rows, num_cols, left_bikes, right_bikes):
+    #     self.board = board
+    #     self.nrows = num_rows
+    #     self.ncols = num_cols
+    #     self.left_bikes = left_bikes
+    #     self.right_bikes = right_bikes
+    #     self.outcome = Outcome.UNKNOWN
 
     def init_board(self):
         self.board = [[1 for i in range(self.ncols)] for j in range(self.nrows)]
@@ -58,6 +58,7 @@ class TronConfiguration:
         elif new_row <= bike.row and not new_col <= bike.col:
             for i in range(new_row, bike.row+1):
                 for j in range(bike.col, new_col+1):
+                    #print(i, " ", j)
                     self.board[i][j] = 0
         elif not new_row <= bike.row and new_col <= bike.col:
             for i in range(bike.row, new_row+1):

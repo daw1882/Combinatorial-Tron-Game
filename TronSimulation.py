@@ -1,5 +1,6 @@
 from TronConfiguration import TronBike, TronConfiguration, Outcome
 import copy
+import time
 
 
 def init_board():
@@ -35,7 +36,7 @@ whoever is going next loses - P position)
 """
 
 
-def run_simulation(position):
+def find_outcome(position):
     """
     Find the outcome class for a board by simulating every possibility in the
     game. This should work by:
@@ -59,6 +60,48 @@ def run_simulation(position):
     :param position: The board state to find the outcome class for.
     :return: An Outcome class type
     """
+    left, right = get_children(position)
+    some_LP = False
+    some_RP = False
+
+    # Initial base cases
+    if len(left) == 0 and len(right) == 0:
+        position.outcome = Outcome.PREVIOUS
+        return Outcome.PREVIOUS
+    if len(left) == 0 and not len(right) == 0:
+        position.outcome = Outcome.RIGHT
+        return Outcome.RIGHT
+    if not len(left) == 0 and len(right) == 0:
+        position.outcome = Outcome.LEFT
+        return Outcome.LEFT
+
+    # Find unknown outcome classes or prune branch if possible
+    for child in left:
+        if child.outcome == Outcome.UNKNOWN:
+            find_outcome(child)
+        if child.outcome == Outcome.LEFT or child.outcome == Outcome.PREVIOUS:
+            some_LP = True
+            break
+    for child in right:
+        if child.outcome == Outcome.UNKNOWN:
+            find_outcome(child)
+        if child.outcome == Outcome.RIGHT or child.outcome == Outcome.PREVIOUS:
+            some_RP = True
+            break
+
+    # Last base cases based on what was found for child outcome classes
+    if some_LP and some_RP:
+        position.outcome = Outcome.NEXT
+        return Outcome.NEXT
+    elif not some_LP and some_RP:
+        position.outcome = Outcome.RIGHT
+        return Outcome.RIGHT
+    elif some_LP and not some_RP:
+        position.outcome = Outcome.LEFT
+        return Outcome.LEFT
+    else:
+        position.outcome = Outcome.PREVIOUS
+        return Outcome.PREVIOUS
 
 
 def get_children(position):
@@ -75,23 +118,127 @@ def get_children(position):
     right_children = []
 
     for i in range(len(position.left_bikes)):
-        curr_row = position.left_bikes[i].row
-        curr_col = position.left_bikes[i].col
-
         # check east
+        curr_col = position.left_bikes[i].col
+        curr_row = position.left_bikes[i].row
+        new_pos = copy.deepcopy(position)
         while curr_col+1 < position.ncols and position.board[curr_row][
             curr_col+1] == 1:
-
+            bike = new_pos.left_bikes[i]
+            new_pos.get_child(bike, bike.row, bike.col+1)
+            left_children.append(new_pos)
+            new_pos = copy.deepcopy(new_pos)
+            curr_col += 1
 
         # check west
+        curr_col = position.left_bikes[i].col
+        new_pos = copy.deepcopy(position)
+        while curr_col-1 >= 0 and position.board[curr_row][
+            curr_col-1] == 1:
+            bike = new_pos.left_bikes[i]
+            new_pos.get_child(bike, bike.row, bike.col-1)
+            left_children.append(new_pos)
+            new_pos = copy.deepcopy(new_pos)
+            curr_col -= 1
 
         # check north
+        curr_col = position.left_bikes[i].col
+        curr_row = position.left_bikes[i].row
+        new_pos = copy.deepcopy(position)
+        while curr_row-1 >= 0 and position.board[curr_row-1][
+            curr_col] == 1:
+            bike = new_pos.left_bikes[i]
+            new_pos.get_child(bike, bike.row-1, bike.col)
+            left_children.append(new_pos)
+            new_pos = copy.deepcopy(new_pos)
+            curr_row -= 1
 
         # check south
+        curr_row = position.left_bikes[i].row
+        new_pos = copy.deepcopy(position)
+        while curr_row+1 < position.nrows and position.board[curr_row+1][
+            curr_col] == 1:
+            #print(new_pos.board[curr_row+1][curr_col], "", curr_row+1, "",
+            #      curr_col)
+            #print(position.nrows)
+            bike = new_pos.left_bikes[i]
+            new_pos.get_child(bike, bike.row+1, bike.col)
+            left_children.append(new_pos)
+            new_pos = copy.deepcopy(new_pos)
+            curr_row += 1
+        #print(left_children)
+
+    for i in range(len(position.right_bikes)):
+        # check east
+        curr_col = position.right_bikes[i].col
+        curr_row = position.right_bikes[i].row
+        new_pos = copy.deepcopy(position)
+        while curr_col+1 < position.ncols and position.board[curr_row][
+            curr_col+1] == 1:
+            bike = new_pos.right_bikes[i]
+            new_pos.get_child(bike, bike.row, bike.col+1)
+            right_children.append(new_pos)
+            new_pos = copy.deepcopy(new_pos)
+            curr_col += 1
+
+        # check west
+        curr_col = position.right_bikes[i].col
+        new_pos = copy.deepcopy(position)
+        while curr_col-1 >= 0 and position.board[curr_row][
+            curr_col-1] == 1:
+            bike = new_pos.right_bikes[i]
+            new_pos.get_child(bike, bike.row, bike.col-1)
+            right_children.append(new_pos)
+            new_pos = copy.deepcopy(new_pos)
+            curr_col -= 1
+
+        # check north
+        curr_col = position.right_bikes[i].col
+        curr_row = position.right_bikes[i].row
+        new_pos = copy.deepcopy(position)
+        while curr_row-1 >= 0 and position.board[curr_row-1][
+            curr_col] == 1:
+            bike = new_pos.right_bikes[i]
+            new_pos.get_child(bike, bike.row-1, bike.col)
+            right_children.append(new_pos)
+            new_pos = copy.deepcopy(new_pos)
+            curr_row -= 1
+
+        # check south
+        curr_row = position.right_bikes[i].row
+        new_pos = copy.deepcopy(position)
+        while curr_row+1 < position.nrows and position.board[curr_row+1][
+            curr_col] == 1:
+            #print(new_pos.board[curr_row+1][curr_col], "", curr_row+1, "",
+            #      curr_col)
+            #print(position.nrows)
+            bike = new_pos.right_bikes[i]
+            new_pos.get_child(bike, bike.row+1, bike.col)
+            right_children.append(new_pos)
+            new_pos = copy.deepcopy(new_pos)
+            curr_row += 1
 
     return left_children, right_children
 
 
 if __name__ == "__main__":
     initial_board = init_board()
-    initial_board.to_str()
+    start = time.time()
+    answer = find_outcome(initial_board)
+    end = time.time()
+    print(answer)
+    print("Runtime:", end-start)
+    # left, right = get_children(initial_board)
+    #
+    # print("LEFT CHILDREN")
+    # for board in left:
+    #     print("=================")
+    #     board.to_str()
+    #
+    # print()
+    # print("RIGHT CHILDREN")
+    # print()
+    #
+    # for board in right:
+    #     print("=================")
+    #     board.to_str()
