@@ -1,39 +1,41 @@
+"""
+author: Dade Wood, daw1882
+filename: TronSimulation.py
+description: This file contains the code to simulate different possibilities
+for a Tron board position and determine its outcome class. This is done in a
+recursive manner in a similar form to backtracking to find a solution.
+"""
+
 from TronConfiguration import TronBike, TronConfiguration, Outcome
 import copy
 import time
 
 
 def init_board():
+    """
+    Get the user's input in order to create the initial board as well as the
+    bike's starting locations. The user is asked the board size in the format
+    'rows cols', then how many bikes for each player, and finally,
+    the locations of each bike in 'row col' format.
+    :return: A TronConfiguration created from the user input
+    """
     board_size = input("Enter in the board size (m n): ").split(" ")
 
     num_left = int(input("How many Left bikes do you want? "))
     left_bikes = []
     for i in range(num_left):
         bike_info = input(f"Bike {i+1} location (r c): ").split(" ")
-        left_bikes.append(TronBike(int(bike_info[0]), int(bike_info[1]), 2))
+        left_bikes.append(TronBike(int(bike_info[0])-1, int(bike_info[1])-1, 2))
 
     num_right = int(input("How many Right bikes do you want? "))
     right_bikes = []
     for i in range(num_right):
         bike_info = input(f"Bike {i+1} location (r c): ").split(" ")
-        right_bikes.append(TronBike(int(bike_info[0]), int(bike_info[1]), 3))
+        right_bikes.append(TronBike(int(bike_info[0])-1, int(bike_info[1])-1, 3))
 
     board = TronConfiguration(int(board_size[0]), int(board_size[1]),
                               left_bikes, right_bikes)
     return board
-
-
-"""
-Notes:
-- will need to do game tree outcome classes to get outcome class of initial 
-position, not just find if one of them can win (one person could use the 
-nonoptimal strategy in the backtracking)
-- backtrack to an end position or to a pruning condition to assign an outcome 
-class to a position, as you go back up in depth then continue assigning 
-outcome classes recursively)
-- ending position is one person can't move at all (if neither can move then 
-whoever is going next loses - P position)
-"""
 
 
 def find_outcome(position):
@@ -75,7 +77,8 @@ def find_outcome(position):
         position.outcome = Outcome.LEFT
         return Outcome.LEFT
 
-    # Find unknown outcome classes or prune branch if possible
+    # Find unknown outcome classes or prune branch if possible by realizing
+    # it is in the 'some' case in the outcome class table
     for child in left:
         if child.outcome == Outcome.UNKNOWN:
             find_outcome(child)
@@ -117,6 +120,7 @@ def get_children(position):
     left_children = []
     right_children = []
 
+    # Get left's children
     for i in range(len(position.left_bikes)):
         # check east
         curr_col = position.left_bikes[i].col
@@ -158,16 +162,13 @@ def get_children(position):
         new_pos = copy.deepcopy(position)
         while curr_row+1 < position.nrows and position.board[curr_row+1][
             curr_col] == 1:
-            #print(new_pos.board[curr_row+1][curr_col], "", curr_row+1, "",
-            #      curr_col)
-            #print(position.nrows)
             bike = new_pos.left_bikes[i]
             new_pos.get_child(bike, bike.row+1, bike.col)
             left_children.append(new_pos)
             new_pos = copy.deepcopy(new_pos)
             curr_row += 1
-        #print(left_children)
 
+    # Get right's children
     for i in range(len(position.right_bikes)):
         # check east
         curr_col = position.right_bikes[i].col
@@ -209,9 +210,6 @@ def get_children(position):
         new_pos = copy.deepcopy(position)
         while curr_row+1 < position.nrows and position.board[curr_row+1][
             curr_col] == 1:
-            #print(new_pos.board[curr_row+1][curr_col], "", curr_row+1, "",
-            #      curr_col)
-            #print(position.nrows)
             bike = new_pos.right_bikes[i]
             new_pos.get_child(bike, bike.row+1, bike.col)
             right_children.append(new_pos)
@@ -222,23 +220,12 @@ def get_children(position):
 
 
 if __name__ == "__main__":
+    # Call the initialization and ask user for setup
     initial_board = init_board()
+    # Find the outcome class and time how long it takes
     start = time.time()
     answer = find_outcome(initial_board)
     end = time.time()
+    # Output results to user
     print(answer)
     print("Runtime:", end-start)
-    # left, right = get_children(initial_board)
-    #
-    # print("LEFT CHILDREN")
-    # for board in left:
-    #     print("=================")
-    #     board.to_str()
-    #
-    # print()
-    # print("RIGHT CHILDREN")
-    # print()
-    #
-    # for board in right:
-    #     print("=================")
-    #     board.to_str()
